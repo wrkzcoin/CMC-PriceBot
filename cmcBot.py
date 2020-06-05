@@ -31,7 +31,7 @@ myconfig = {
     }
 
 connPool = pymysqlpool.ConnectionPool(size=4, name='connPool', **myconfig)
-conn = connPool.get_connection(timeout=5, retry_num=2)
+conn = connPool.get_connection(timeout=10, retry_num=3)
 
 token = config.discord.token
 EMOJI_EXCHANGE = "\U0001F4B1"
@@ -50,7 +50,7 @@ def openConnection():
     global conn, connPool
     try:
         if conn is None:
-            conn = connPool.get_connection(timeout=5, retry_num=2)
+            conn = connPool.get_connection(timeout=10, retry_num=3)
     except:
         print("ERROR: Unexpected error: Could not connect to MySql instance.")
         sys.exit()
@@ -146,9 +146,9 @@ async def price(ctx, *args):
         if (ValueInUSD(1, PriceQ[0]) == ''):
             message = 'Invalid ticker.'
             await ctx.message.add_reaction(EMOJI_ERROR) 
-        if (PriceQ[0].upper() == 'LIST'):
+        if PriceQ[0].upper() == 'LIST':
             message = PriceMon_List(str(ctx.message.author.id))
-        elif (PriceQ[0].lower() == 'delall' or PriceQ[0].lower() == 'del-all'):
+        elif PriceQ[0].lower() == 'delall' or PriceQ[0].lower() == 'del-all':
             message = PriceMon_DelAll(str(ctx.message.author.id))
         else:
             message = ValueInUSD(1, PriceQ[0])
@@ -180,12 +180,12 @@ async def price(ctx, *args):
                 await ctx.message.add_reaction(EMOJI_ERROR)
                 return
 
-            if (ValueInUSD(amount, PriceQ[1]) == ''):
+            if ValueInUSD(amount, PriceQ[1]) == '':
                 message = 'Invalid ticker.'
                 await ctx.message.add_reaction(EMOJI_ERROR)
             else:
                 message = ValueInUSD(amount, PriceQ[1])
-        elif (PriceQ[0].lower() == "del"):
+        elif PriceQ[0].lower() == "del":
             if (PriceMon_CheckExist(str(ctx.message.author.id), PriceQ[1].upper()) == True):
                 msg = PriceMon_Del(str(ctx.message.author.id), PriceQ[1].upper())
             else:
@@ -194,7 +194,7 @@ async def price(ctx, *args):
             message = msg
         await ctx.send(message)
         return
-    elif (len(PriceQ) == 3):
+    elif len(PriceQ) == 3:
         # .price xmr in btc
         # .price add 10 xmr
         if not re.match('^[a-zA-Z0-9]+$', PriceQ[0]) or not re.match('^[a-zA-Z0-9]+$', PriceQ[2]):
@@ -228,12 +228,12 @@ async def price(ctx, *args):
             else:
                 totalValue = float(tmpA1 / tmpB1)
                 MsgPrice = MsgPrice + '`1 {} = {:,.8f}{} from Coinmarketcap`\n'.format(PriceQ[0].upper(), totalValue, PriceQ[2].upper())
-            if (any(x is None for x in [tmpA2, tmpB2])):
+            if any(x is None for x in [tmpA2, tmpB2]):
                 MsgPrice = MsgPrice
             else:
                 totalValue = float(tmpA2 / tmpB2)
                 MsgPrice = MsgPrice + '`1 {} = {:,.8f}{} from Coingecko`'.format(PriceQ[0].upper(), totalValue, PriceQ[2].upper())
-            if (MsgPrice == ''):
+            if MsgPrice == '':
                 MsgPrice = '`No result found pair {} and {}`'.format(PriceQ[0].upper(), PriceQ[2].upper())
                 await ctx.message.add_reaction(EMOJI_ERROR)
             message = MsgPrice
@@ -277,8 +277,8 @@ async def price(ctx, *args):
                             message = msg 
             await ctx.send(message)
             return
-    elif (len(PriceQ) == 4):
-        if (PriceQ[2].lower() != "in"):
+    elif len(PriceQ) == 4:
+        if PriceQ[2].lower() != "in":
             message = 'Invalid syntax .price.'
         else:
             if not re.match('^[a-zA-Z0-9]+$', PriceQ[1]):
@@ -308,20 +308,20 @@ async def price(ctx, *args):
             MsgPrice = ''
             #print(any(x is None for x in [tmpA1, tmpB1]))
             #print(any(x is None for x in [tmpA2, tmpB2]))
-            if (any(x is None for x in [tmpA1, tmpB1])):
+            if any(x is None for x in [tmpA1, tmpB1]):
                 MsgPrice = MsgPrice
             else:
                 totalValue = float(float(amount) * tmpA1 / tmpB1)
                 #print(totalValue)
                 MsgPrice = MsgPrice + '`{} {} = {:,.8f}{} from Coinmarketcap`\n'.format(amount, PriceQ[1].upper(), totalValue, PriceQ[3].upper())
-            if (any(x is None for x in [tmpA2, tmpB2])):
+            if any(x is None for x in [tmpA2, tmpB2]):
                 MsgPrice = MsgPrice
             else:
                 totalValue = float(float(amount) * tmpA2 / tmpB2)
                 #print(totalValue)
                 MsgPrice = MsgPrice + '`{} {} = {:,.8f}{} from Coingecko`'.format(amount, PriceQ[1].upper(), totalValue, PriceQ[3].upper())
 
-            if (MsgPrice == ''):
+            if MsgPrice == '':
                 message = '`No result found pair {} and {}`'.format(PriceQ[1].upper(), PriceQ[3].upper())
                 await ctx.message.add_reaction(EMOJI_ERROR)
             else:
@@ -425,7 +425,7 @@ def ValueInUSD(amount, ticker) -> str:
             cursor.execute(sql, (ticker.lower(),))
             result2 = cursor.fetchone()
 
-            if (result is None) and (result2 is None):
+            if all(v is None for v in [result, result2]):
                 return '`We can not find ticker {} in Coinmarketcap`'.format(ticker.upper())
             else:
                 if result:
@@ -433,14 +433,14 @@ def ValueInUSD(amount, ticker) -> str:
                     ticker = result['symbol'].upper()
                     price = result['priceUSD']
                     totalValue = amount * price
-                    if (float(totalValue) > 0.01):
+                    if float(totalValue) > 0.01:
                         totalValue = '{:,.4f}'.format(float(totalValue))
                     else:
                         totalValue = '{:,.8f}'.format(float(totalValue))
                     update = datetime.datetime.strptime(result['last_updated'].split(".")[0], '%Y-%m-%dT%H:%M:%S')
                     ago = timeago.format(update, datetime.datetime.utcnow())
 
-                if result2 is not None:				
+                if result2:				
                     name2 = result2['name']
                     ticker2 = result2['symbol'].upper()
                     price2 = result2['marketprice_USD']
@@ -471,12 +471,10 @@ def ValueCmcUSD(ticker) -> float:
             sql = "SELECT * FROM `cmc_v2` WHERE `symbol`=%s ORDER BY `id` DESC LIMIT 1"
             cursor.execute(sql, (ticker.upper(),))
             result = cursor.fetchone()
-            if result is None:
-                return None
-            else:
-                return float(result['priceUSD'])
+            if result: return float(result['priceUSD'])
     except Exception as e:
         traceback.print_exc(file=sys.stdout)
+    return None
 
 
 def ValueCmcUSDList():
@@ -488,9 +486,7 @@ def ValueCmcUSDList():
             sql = "SELECT * FROM `cmc_v2` WHERE id IN (SELECT MAX(id) FROM `cmc_v2` GROUP BY symbol)"
             number_of_rows  = cursor.execute(sql,)
             result = cursor.fetchall()
-            if result is None:
-                return None
-            else:
+            if result:
                 res = {}
                 for row in result:
                     if (row['priceUSD'] is not None):
@@ -499,6 +495,7 @@ def ValueCmcUSDList():
                 return res
     except Exception as e:
         traceback.print_exc(file=sys.stdout)
+    return None
 
 
 def ValueGeckoUSD(ticker) -> float:
@@ -510,12 +507,10 @@ def ValueGeckoUSD(ticker) -> float:
             sql = "SELECT * FROM `coingecko_v2` WHERE `symbol`=%s ORDER BY `id` DESC LIMIT 1"
             cursor.execute(sql, (ticker.lower(),))
             result = cursor.fetchone()
-            if result is None:
-                return None
-            else:
-                return float(result['marketprice_USD'])
+            if result: return float(result['marketprice_USD'])
     except Exception as e:
         traceback.print_exc(file=sys.stdout)
+    return None
 
 
 def ValueGeckoUSDList():
@@ -527,9 +522,7 @@ def ValueGeckoUSDList():
             sql = "SELECT * FROM `coingecko_v2` WHERE id IN (SELECT MAX(id) FROM `coingecko_v2` GROUP BY symbol)"
             number_of_rows  = cursor.execute(sql,)
             result = cursor.fetchall()
-            if result is None:
-                return None
-            else:
+            if result:
                 res = {}
                 for row in result:
                     if (row['marketprice_USD'] is not None):
@@ -538,6 +531,7 @@ def ValueGeckoUSDList():
                 return res
     except Exception as e:
         traceback.print_exc(file=sys.stdout)
+    return None
 
 
 def PriceMon_Del(discordID, symbol) -> str:
@@ -577,10 +571,7 @@ def PriceMon_CheckExist(discordID, symbol):
             sql = "SELECT * FROM `PriceMonUser_v1` WHERE `discordID`=%s AND `symbol`=%s"
             cursor.execute(sql, (discordID, symbol.upper(),))
             ExistSymbol = cursor.fetchone()
-            if ExistSymbol is None:
-                return False
-            else:
-                return True
+            return False if ExistSymbol is None else True
     except Exception as e:
         traceback.print_exc(file=sys.stdout)
 
@@ -633,13 +624,13 @@ def PriceMon_List(discordID) -> str:
                 #print(row)
                 i += 1
 
-                if (row['priceUSD_cmc'] is None) and (row['priceUSD_coingecko'] is None):
+                if all(v is None for v in [row['priceUSD_cmc'], row['priceUSD_coingecko']]):
                     SubPrice = 0
                 else:
                     if row['amount'] is None:
                         row['amount'] = 0
                     else:
-                        if (min(row['priceUSD_cmc'], row['priceUSD_coingecko']) == 0):
+                        if min(row['priceUSD_cmc'], row['priceUSD_coingecko']) == 0:
                             SubPrice = row['amount'] * (max(row['priceUSD_cmc'], row['priceUSD_coingecko']))
                         else:
                             SubPrice = row['amount'] * (min(row['priceUSD_cmc'], row['priceUSD_coingecko']))
@@ -670,9 +661,9 @@ def PriceMon_update_rate():
             number_of_rows = cursor.execute(sql,)
             result = cursor.fetchall()
             for row in result:
-                if (row['symbol'] not in UnitPriceCmc):
+                if row['symbol'] not in UnitPriceCmc:
                     UnitPriceCmc[row['symbol']] = 0
-                if (row['symbol'] not in UnitPriceGecko):
+                if row['symbol'] not in UnitPriceGecko:
                     UnitPriceGecko[row['symbol']] = 0
                 sql = "UPDATE `PriceMonUser_v1` SET `priceUSD_cmc`=%s, `priceUSD_coingecko`=%s, `last_update`=%s WHERE `symbol`=%s"
                 cursor.execute(sql, (UnitPriceCmc[row['symbol']], UnitPriceGecko[row['symbol']], datetime.datetime.utcnow(), row['symbol'],))
@@ -680,6 +671,20 @@ def PriceMon_update_rate():
                 print('Records updated unit price list {}...'.format(row['symbol']))
     except Exception as e:
         traceback.print_exc(file=sys.stdout)
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.NoPrivateMessage):
+        await ctx.send('This command cannot be used in private messages.')
+    elif isinstance(error, commands.DisabledCommand):
+        await ctx.send('Sorry. This command is disabled and cannot be used.')
+    elif isinstance(error, commands.MissingRequiredArgument):
+        #command = ctx.message.content.split()[0].strip('.')
+        #await ctx.send('Missing an argument: try `.help` or `.help ' + command + '`')
+        pass
+    elif isinstance(error, commands.CommandNotFound):
+        pass
 
 
 async def update_rate_inMonList():
