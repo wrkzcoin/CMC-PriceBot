@@ -82,8 +82,12 @@ async def on_guild_remove(guild):
 async def on_message(message):
     # ignore .help in public
     if message.content.upper().startswith('.HELP') and isinstance(message.channel, discord.DMChannel) == False:
-        await message.channel.send('Help command is available via Direct Message (DM) only.')
-        return
+        # WrkzCoin Server, Channel #botz
+        if message.guild.id == 460755304863498250 and message.channel.id == 475018504911716352:
+            await message.channel.send('Help command is available via Direct Message (DM) only.')
+            return
+        elif message.guild.id == 460755304863498250:
+            return
     # Do not remove this, otherwise, command not working.
     ctx = await bot.get_context(message)
     await bot.invoke(ctx)
@@ -341,6 +345,7 @@ async def mcap(ctx, ticker: str):
     else:
         try:
             openConnection()
+            conn.ping(reconnect=True)  # reconnecting mysql
             message = "Unknown error."
             with conn.cursor() as cursor:
             # Read a single record
@@ -414,6 +419,7 @@ def ValueInUSD(amount, ticker) -> str:
     global conn
     try:
         openConnection()
+        conn.ping(reconnect=True)  # reconnecting mysql
         with conn.cursor() as cursor:
         # Read a single record
             sql = "SELECT * FROM `cmc_v2` WHERE `symbol`=%s ORDER BY `id` DESC LIMIT 1"
@@ -466,6 +472,7 @@ def ValueCmcUSD(ticker) -> float:
     global conn
     try:
         openConnection()
+        conn.ping(reconnect=True)  # reconnecting mysql
         with conn.cursor() as cursor:
         # Read a single record
             sql = "SELECT * FROM `cmc_v2` WHERE `symbol`=%s ORDER BY `id` DESC LIMIT 1"
@@ -481,6 +488,7 @@ def ValueCmcUSDList():
     global conn
     try:
         openConnection()
+        conn.ping(reconnect=True)  # reconnecting mysql
         with conn.cursor() as cursor:
         # Read a single record
             sql = "SELECT * FROM `cmc_v2` WHERE id IN (SELECT MAX(id) FROM `cmc_v2` GROUP BY symbol)"
@@ -502,6 +510,8 @@ def ValueGeckoUSD(ticker) -> float:
     global conn
     try:
         openConnection()
+        conn.ping(reconnect=True)  # reconnecting mysql
+        conn.ping(reconnect=True)  # reconnecting mysql
         with conn.cursor() as cursor:
         # Read a single record
             sql = "SELECT * FROM `coingecko_v2` WHERE `symbol`=%s ORDER BY `id` DESC LIMIT 1"
@@ -517,6 +527,7 @@ def ValueGeckoUSDList():
     global conn
     try:
         openConnection()
+        conn.ping(reconnect=True)  # reconnecting mysql
         with conn.cursor() as cursor:
         # Read a single record
             sql = "SELECT * FROM `coingecko_v2` WHERE id IN (SELECT MAX(id) FROM `coingecko_v2` GROUP BY symbol)"
@@ -538,6 +549,7 @@ def PriceMon_Del(discordID, symbol) -> str:
     global conn
     try:
         openConnection()
+        conn.ping(reconnect=True)  # reconnecting mysql
         with conn.cursor() as cursor:
         # Read a single record
             sql = "DELETE FROM `PriceMonUser_v1` WHERE `discordID`=%s AND `symbol`=%s"
@@ -552,6 +564,7 @@ def PriceMon_DelAll(discordID) -> str:
     global conn
     try:
         openConnection()
+        conn.ping(reconnect=True)  # reconnecting mysql
         with conn.cursor() as cursor:
         # Read a single record
             sql = "DELETE FROM `PriceMonUser_v1` WHERE `discordID`=%s"
@@ -566,6 +579,7 @@ def PriceMon_CheckExist(discordID, symbol):
     global conn
     try:
         openConnection()
+        conn.ping(reconnect=True)  # reconnecting mysql
         with conn.cursor() as cursor:
         # Read a single record
             sql = "SELECT * FROM `PriceMonUser_v1` WHERE `discordID`=%s AND `symbol`=%s"
@@ -580,6 +594,7 @@ def PriceMon_CountRecord(discordID) -> int:
     global conn
     try:
         openConnection()
+        conn.ping(reconnect=True)  # reconnecting mysql
         with conn.cursor() as cursor:
         # Read a single record
             sql = "SELECT * FROM `PriceMonUser_v1` WHERE `discordID`=%s"
@@ -593,6 +608,7 @@ def PriceMon_Add(discordID, symbol, amount, UnitPriceCmc, UnitPriceGecko) -> str
     global conn
     try:
         openConnection()
+        conn.ping(reconnect=True)  # reconnecting mysql
         with conn.cursor() as cursor:
         # Read a single record
             current_Date = int(datetime.datetime.now().timestamp())
@@ -612,6 +628,7 @@ def PriceMon_List(discordID) -> str:
     ]
     try:
         openConnection()
+        conn.ping(reconnect=True)  # reconnecting mysql
         with conn.cursor() as cursor:
         # Read a single record
             sql = "SELECT * FROM `PriceMonUser_v1` WHERE `discordID`=%s ORDER BY `symbol` ASC LIMIT 50"
@@ -646,7 +663,7 @@ def PriceMon_List(discordID) -> str:
         return '`'+table.table+'`\n`Your tracking coin(s) values in USD: '+'{:,.2f}'.format(SumFund)+' USD`'
 
 
-def PriceMon_update_rate():
+async def PriceMon_update_rate():
     global conn
     UnitPriceCmc = {}
     UnitPriceGecko = {}
@@ -655,6 +672,7 @@ def PriceMon_update_rate():
 
     try:
         openConnection()
+        conn.ping(reconnect=True)  # reconnecting mysql
         with conn.cursor() as cursor:
         # Read a single record
             sql = "SELECT DISTINCT `symbol` FROM `PriceMonUser_v1`"
@@ -691,8 +709,8 @@ async def update_rate_inMonList():
 ## Let bot update rate every 60 seconds
     while not bot.is_closed:
         await asyncio.sleep(30)
-        PriceMon_update_rate()
-        await asyncio.sleep(60)
+        await PriceMon_update_rate()
+        await asyncio.sleep(300)
 
 # start bot
 bot.loop.create_task(update_rate_inMonList())
